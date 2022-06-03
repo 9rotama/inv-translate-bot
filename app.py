@@ -3,14 +3,12 @@
 import discord
 from os import getenv
 import trans
-from PIL import Image
-import requests
-import io
 
 command_prefix = "^"
 
+
 class MyClient(discord.Client):
-    isStarted = False;
+    isStarted = False
     langs = ["en"]
 
     async def on_ready(self):
@@ -23,7 +21,7 @@ class MyClient(discord.Client):
         if message.content.startswith(command_prefix+'start'):
             if not self.isStarted:
                 await message.channel.send('翻訳開始!')
-                self.isStarted = True;
+                self.isStarted = True
                 return
             else:
                 return
@@ -31,7 +29,7 @@ class MyClient(discord.Client):
         if message.content.startswith(command_prefix+'bye'):
             if self.isStarted:
                 await message.channel.send('翻訳を終了します')
-                self.isStarted = False;
+                self.isStarted = False
                 return
             else:
                 return
@@ -67,6 +65,7 @@ class MyClient(discord.Client):
             result = trans.trans_loop(tmp, self.langs)
             await message.channel.send(name + "> " + result)
             return
+
 
 intents = discord.Intents.default()
 client = MyClient(intents=intents)
