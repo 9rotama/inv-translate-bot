@@ -1,6 +1,7 @@
 # This example requires the 'message_content' intent.
 
 import discord
+from os import getenv
 import trans
 from PIL import Image
 import requests
