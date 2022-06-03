@@ -121,6 +121,7 @@ def trans_loop(text, langs):
         print(prev_trans)
         next_trans = tr.translate(prev_trans, src=las[i], dest=las[i+1]).text
         prev_trans = next_trans
+    print(prev_trans)
     final_trans = tr.translate(prev_trans, src=las[len(las)-1], dest="ja").text
 
     return final_trans
