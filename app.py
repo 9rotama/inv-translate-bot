@@ -70,6 +70,5 @@ class MyClient(discord.Client):
 intents = discord.Intents.default()
 client = MyClient(intents=intents)
 
-token = 'getenv('DISCORD_BOT_TOKEN')'
-
+token = getenv('DISCORD_BOT_TOKEN')
 client.run(token)
