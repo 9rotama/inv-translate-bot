@@ -1,21 +1,39 @@
-from discord.ext import commands
-from os import getenv
-import traceback
+# This example requires the 'message_content' intent.
 
-bot = commands.Bot(command_prefix='^')
+import discord
 
 
-@bot.event
-async def on_command_error(ctx, error):
-    orig_error = getattr(error, "original", error)
-    error_msg = ''.join(traceback.TracebackException.from_exception(orig_error).format())
-    await ctx.send(error_msg)
 
+class MyClient(discord.Client):
+    isStarted = False;
 
-@bot.command()
-async def ping(ctx):
-    await ctx.send('pong')
+    async def on_ready(self):
+        print(f'We have logged in as {self.user}')
 
+    async def on_message(self, message):
+        if message.author == self.user:
+            return
 
+        if message.content.startswith('^bye'):
+            if self.isStarted:
+                await message.channel.send('翻訳を終了します')
+                self.isStarted = False;
+            else:
+                return
+
+        if self.isStarted:
+            await message.channel.send(message.content)
+
+        if message.content.startswith('^start'):
+            if not self.isStarted:
+                await message.channel.send('翻訳開始!')
+                self.isStarted = True;
+            else:
+                return
+
+intents = discord.Intents.default()
+client = MyClient(intents=intents)
+
+# token = 'getenv('DISCORD_BOT_TOKEN')'
 token = 'OTgyMDg0MDQ2OTI0NDM5NjIy.Gy_m2U.K9hK2zE2iR5tWoBtNGdJFAuTFdKyE1iFl6mWWs'
-bot.run(token)
+client.run(token)
