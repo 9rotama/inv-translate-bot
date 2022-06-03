@@ -2,7 +2,7 @@ from discord.ext import commands
 from os import getenv
 import traceback
 
-bot = commands.Bot(command_prefix='/')
+bot = commands.Bot(command_prefix='^')
 
 
 @bot.event
@@ -17,5 +17,5 @@ async def ping(ctx):
     await ctx.send('pong')
 
 
-token = getenv('DISCORD_BOT_TOKEN')
+token = 'OTgyMDg0MDQ2OTI0NDM5NjIy.Gy_m2U.K9hK2zE2iR5tWoBtNGdJFAuTFdKyE1iFl6mWWs'
 bot.run(token)

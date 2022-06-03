@@ -1,3 +1,9 @@
+# inv-translate-bot
+
+日本語のメッセージを再翻訳して置き換えてくれるbot
+
+- 再翻訳で経由する言語の数、種類の設定
+
 # discordpy-startup
 
 [![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy)
