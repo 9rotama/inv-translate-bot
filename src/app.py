@@ -4,7 +4,7 @@ import discord
 from os import getenv
 import trans
 
-command_prefix = "^"
+command_prefix = "^^"
 
 class BotClient(discord.Client):
     channels = {}
@@ -56,13 +56,13 @@ class BotClient(discord.Client):
                     self.channels[channel_id] = ["en"]
                     return
                 else:
-                    for arg in args:
-                        if not arg in trans.LANGUAGES:
-                            embed = discord.Embed(title='set', description='無効な言語が指定されています```' + arg + '```')
-                            embed.set_author(name=self.user.name, icon_url=self.user.avatar_url)
-                            await message.channel.send(embed=embed)
-                            self.channels[channel_id] = ["en"]
-                            return
+                    res = trans.trans("a", args)
+                    if "無効な引数: target" in res:
+                        embed = discord.Embed(title='set', description='無効な言語が指定されています')
+                        embed.set_author(name=self.user.name, icon_url=self.user.avatar_url)
+                        await message.channel.send(embed=embed)
+                        self.channels[channel_id] = ["en"]
+                        return
                     self.channels[channel_id] = args
                     embed = discord.Embed(title='set', description="言語を設定しました```ja 👉 " + ' 👉 '.join(self.channels[channel_id]) + " 👉 ja```")
                     embed.set_author(name=self.user.name, icon_url=self.user.avatar_url)
