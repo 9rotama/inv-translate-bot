@@ -1,10 +1,13 @@
-# inv-translate-bot
+# 無駄翻訳bot
 
-日本語のメッセージを再翻訳して置き換えてくれるbot
+![Frame 2](https://user-images.githubusercontent.com/65887771/171993445-42c0909b-fd47-4283-b719-16b94dd7838c.png)
+
+Discordで送信された日本語のメッセージを勝手に再翻訳してくれるbot
 
 ## 使い方
 
 ```^start```
+
 
 翻訳開始
 
