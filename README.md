@@ -28,6 +28,7 @@
 
 - discord.py 1.7.3
 - Google App Script (翻訳部分)
+- Heroku
 
 # discordpy-startup
 
