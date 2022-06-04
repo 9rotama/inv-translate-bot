@@ -24,6 +24,11 @@
 
 翻訳を終了
 
+## 使ったもの
+
+- discord.py 1.7.3
+- Google App Script (翻訳部分)
+
 # discordpy-startup
 
 [![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy)
