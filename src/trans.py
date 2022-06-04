@@ -1,7 +1,7 @@
 import requests
 
 def trans(txt, langs):
-    url = "https://script.google.com/macros/s/AKfycbybnefLnp6WsVP1Ju7EeN6L1O6BT3ed4Jwc7kOouosn6o6rQHt2EWVPn8vAQcZJ8s8O/exec?"+"txt="+txt+"&langs="+','.join(langs)+""
+    url = "https://script.google.com/macros/s/AKfycbybnefLnp6WsVP1Ju7EeN6L1O6BT3ed4Jwc7kOouosn6o6rQHt2EWVPn8vAQcZJ8s8O/exec?"+"txt="+txt+"&langs="+",".join(langs)
     r = requests.get(url)
     return r.text
 
