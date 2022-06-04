@@ -4,7 +4,7 @@ import discord
 from os import getenv
 import trans
 
-command_prefix = "^^"
+command_prefix = "^"
 
 class BotClient(discord.Client):
     channels = {}
