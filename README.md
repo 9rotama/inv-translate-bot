@@ -4,6 +4,11 @@
 
 Discordで送信された日本語のメッセージを勝手に再翻訳してくれるbot
 
+遊んでいる様子↓
+![run1](https://user-images.githubusercontent.com/65887771/173186564-16d1a0bb-99e9-4d47-92ab-a712959ef8a3.png)
+![run2](https://user-images.githubusercontent.com/65887771/173186547-e5e523d1-7058-4dc1-9bd2-349a590ddc16.png)
+
+
 ## 使い方
 
 ```^start```
