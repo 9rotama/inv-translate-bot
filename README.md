@@ -12,6 +12,10 @@ Discordで送信された日本語のメッセージを勝手に再翻訳して�
 
 ## 使い方
 
+以下URLから招待してください↓
+https://discord.com/api/oauth2/authorize?client_id=981977773277061210&permissions=274945108992&scope=bot
+※開発中のためサーバの招待は自己責任でお願いします
+
 ```^start```
 
 
