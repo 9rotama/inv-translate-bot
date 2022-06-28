@@ -1,11 +1,11 @@
 import discord
 import translate
+import ChannelConfig
 
 command_prefix = "^^"
 
-
 class BotClient(discord.Client):
-    started_channels_list = {}
+    channels_list: dict[str, ChannelConfig.ChannelConfig] = {}
     # key...チャンネルID
     # value...チャンネルごとの設定
 
@@ -32,7 +32,11 @@ class BotClient(discord.Client):
 
     async def on_message(self, message):
         channel_id = message.channel.id
-        is_started = channel_id in self.started_channels_list
+
+        if not channel_id in self.channels_list:
+            self.channels_list[channel_id] = ChannelConfig.ChannelConfig
+
+        started = self.channels_list[channel_id].started
 
         bot_name = self.user.name
         bot_icon_url = self.user.avatar_url
@@ -42,39 +46,38 @@ class BotClient(discord.Client):
         # bot自身のメッセージは読まずに終了
 
         if message.content.startswith(command_prefix+"start"):
-            if not is_started:
+            if not started:
                 desc = "翻訳開始！"
                 embed = self.create_embed(
                     "start", desc, bot_name, bot_icon_url)
                 await message.channel.send(embed=embed)
+                self.channels_list[channel_id].started = True
 
-                self.started_channels_list[channel_id] = ["en"]
-                # 新しいチャンネルの言語を英語のみで初期化
                 return
 
             else:
                 return
 
         if message.content.startswith(command_prefix+"stop"):
-            if is_started:
+            if started:
                 desc = "翻訳を終了します"
                 embed = self.create_embed(
                     "stopped", desc, bot_name, bot_icon_url)
                 await message.channel.send(embed=embed)
 
-                del self.started_channels_list[channel_id]
-                # 辞書からチャンネルを削除
+                self.channels_list[channel_id].started = False
+
                 return
 
             else:
                 return
 
         if message.content.startswith(command_prefix+"set"):
-            if is_started:
+            if started:
                 args = message.content.split(" ")[1:]
 
                 if len(args) == 0:
-                    desc = "設定中の言語```" + self.langs_order_str(self.started_channels_list[channel_id], " 👉 ") + "```"
+                    desc = "設定中の言語```" + self.langs_order_str(self.channels_list[channel_id].langs, " 👉 ") + "```"
 
                     embed = self.create_embed(
                         "set", desc, bot_name, bot_icon_url)
@@ -102,7 +105,7 @@ class BotClient(discord.Client):
                         await message.channel.send(embed=embed)
 
                         return
- 
+
                     elif "特定の言語間での翻訳は、現在サポートされていません。" in res:
                         desc = "同じ言語間での翻訳\nor\nサポートされていない特定の言語間の翻訳\nが含まれています"
                         embed = self.create_embed(
@@ -111,9 +114,9 @@ class BotClient(discord.Client):
 
                         return
 
-                    self.started_channels_list[channel_id] = args
+                    self.channels_list[channel_id].langs = args
 
-                    desc = "言語を設定しました```" + self.langs_order_str(self.started_channels_list[channel_id], " 👉 ") + "```"
+                    desc = "言語を設定しました```" + self.langs_order_str(self.channels_list[channel_id].langs, " 👉 ") + "```"
 
                     embed = self.create_embed(
                         "set", desc, bot_name, bot_icon_url)
@@ -132,7 +135,7 @@ class BotClient(discord.Client):
 
             return
 
-        if is_started:
+        if started:
             not_translated_txt = message.content
 
             await message.delete()
@@ -142,10 +145,10 @@ class BotClient(discord.Client):
                 name = message.author.name
             # ニックネームが設定されてなければユーザ名で表示する
 
-            result = translate.translate_GAS(not_translated_txt, self.started_channels_list[channel_id])
+            result = translate.translate_GAS(not_translated_txt, self.channels_list[channel_id].langs)
             desc = result + "\n\n||原文:" + not_translated_txt + "||"
             icon_url = message.author.avatar_url
-            footer_text = self.langs_order_str(self.started_channels_list[channel_id], " -> ")
+            footer_text = self.langs_order_str(self.channels_list[channel_id].langs, " -> ")
 
             embed = self.create_embed_withfooter("", desc, name, icon_url, footer_text, icon_url)
             await message.channel.send(embed=embed)
