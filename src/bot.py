@@ -6,7 +6,7 @@ from translate import translate_GAS
 from generate import langs_order_str, create_embed, create_embed_withfooter
 from ChannelConfig import ChannelConfig
 
-command_prefix = "t^"
+command_prefix = "^^"
 
 intents = discord.Intents.all()
 intents.message_content = True
@@ -102,6 +102,27 @@ async def show(ctx, *args):
     return
 
 #
+# spoil ...　コマンドが打たれたチャンネルの原文表示の切り替え
+#
+
+@bot.command()
+async def spoil(ctx):
+    if not ctx.channel.id in channels_list:
+        channels_list[ctx.channel.id] = ChannelConfig(ctx.channel.id)
+
+    if channels_list[ctx.channel.id].show_origin_text:
+        desc = "原文を非表示にします"
+        channels_list[ctx.channel.id].show_origin_text = False
+    else:
+        desc = "原文を表示します"
+        channels_list[ctx.channel.id].show_origin_text = True
+
+    embed = create_embed(
+        "set", desc, bot.user.name, bot.user.display_avatar.url)
+    await ctx.channel.send(embed=embed)
+    return
+
+#
 # l ...　コマンドが打たれたチャンネルでの中継言語を設定
 #
 
@@ -158,7 +179,7 @@ async def l(ctx, *args):
 #
 
 @bot.command()
-async def lo(ctx, *args):
+async def ol(ctx, *args):
     if not ctx.channel.id in channels_list:
         channels_list[ctx.channel.id] = ChannelConfig(ctx.channel.id)
     if len(args) == 0:
@@ -212,10 +233,10 @@ async def lo(ctx, *args):
 async def help(ctx):
     desc = "```" + command_prefix + "on```翻訳開始\n" \
         + "```"+ command_prefix + "off```翻訳を終了\n" \
-        + "```" + command_prefix + "show```現在の設定を表示\n" \
+        + "```" + command_prefix + "config```現在の設定を表示\n" \
         + "```"+ command_prefix + "l [1番目の言語コード] [2番めの言語コード] ...```中継する言語を設定\n※10ヶ国語まで設定できます" \
-        + "```"+ command_prefix + "lo [言語コード]```原文で使用する言語を設定\n言語コードの表 → https://cloud.google.com/translate/docs/languages?hl=ja\n" \
-        + "```" + command_prefix + "ori```原文の表示/非表示切り替え\n"
+        + "```"+ command_prefix + "ol [言語コード]```原文で使用する言語を設定\n言語コードの表 → https://cloud.google.com/translate/docs/languages?hl=ja\n" \
+        + "```" + command_prefix + "spoil```原文の表示/非表示切り替え\n"
 
     embed = create_embed("使い方", desc, bot.user.name, bot.user.display_avatar.url)
     await ctx.channel.send(embed=embed)
@@ -248,7 +269,11 @@ async def on_message(ctx):
         # ニックネームが設定されてなければユーザ名で表示する
 
         result = translate_GAS(not_translated_txt, channels_list[ctx.channel.id].langs, channels_list[ctx.channel.id].origin_lang,)
-        desc = result + "\n\n||原文:" + not_translated_txt + "||"
+        if channels_list[ctx.channel.id].show_origin_text:
+            desc = result + "\n\n||原文:" + not_translated_txt + "||"
+        else:
+            desc = result
+
         icon_url = ctx.author.display_avatar.url
         footer_text = langs_order_str(channels_list[ctx.channel.id].langs, channels_list[ctx.channel.id].origin_lang, " -> ")
 

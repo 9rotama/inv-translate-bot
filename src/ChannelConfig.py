@@ -3,6 +3,6 @@ class ChannelConfig:
     self.channel_id = id
     self.started: bool = False
     self.langs: list[str] = ["en"] #中継言語
-    self.show_origin_text: bool = False #原文を表示するかどうか
+    self.show_origin_text: bool = True #原文を表示するかどうか
     self.origin_lang: str = "ja" #原文の言語
     print("new channel")
