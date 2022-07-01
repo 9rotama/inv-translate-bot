@@ -1,7 +1,7 @@
 import discord
 
-def langs_order_str(langs, separator):
-    str = "ja" + separator + separator.join(langs) + separator + "ja"
+def langs_order_str(langs, origin_lang, separator):
+    str = origin_lang + separator + separator.join(langs) + separator + origin_lang
     return str
 
 def create_embed(title, desc, name, icon_url):

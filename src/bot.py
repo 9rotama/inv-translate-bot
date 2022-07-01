@@ -6,7 +6,7 @@ from translate import translate_GAS
 from generate import langs_order_str, create_embed, create_embed_withfooter
 from ChannelConfig import ChannelConfig
 
-command_prefix = "rt!"
+command_prefix = "t^"
 
 intents = discord.Intents.all()
 intents.message_content = True
@@ -16,7 +16,7 @@ bot = commands.Bot(
     intents=intents
     )
 # デフォルトで入っているhelpコマンドを削除
-bot.remove_command('help') 
+bot.remove_command('help')
 
 channels_list: dict[str, ChannelConfig] = {}
 # チャンネルごとの設定を保持する辞書
@@ -30,8 +30,12 @@ async def on_ready():
     await bot.change_presence(activity=discord.Game(name=command_prefix+"helpでヘルプ表示"))
     # ステータスを設定
 
+#
+# on ...　コマンドが打たれたチャンネルで自動翻訳を開始する
+#
+
 @bot.command()
-async def start(ctx):
+async def on(ctx):
     if not ctx.channel.id in channels_list:
         channels_list[ctx.channel.id] = ChannelConfig(ctx.channel.id) #channel_listに追加
 
@@ -39,7 +43,7 @@ async def start(ctx):
         desc = "翻訳開始！"
 
         embed = create_embed(
-            "start", desc, bot.user.name, bot.user.display_avatar.url)
+            "on", desc, bot.user.name, bot.user.display_avatar.url)
         await ctx.channel.send(embed=embed)
         channels_list[ctx.channel.id].started = True
         return
@@ -52,8 +56,12 @@ async def start(ctx):
         channels_list[ctx.channel.id].started = True
         return
 
+#
+# off ...　コマンドが打たれたチャンネルで自動翻訳を終了する
+#
+
 @bot.command()
-async def stop(ctx):
+async def off(ctx):
     if not ctx.channel.id in channels_list:
         desc = "先に翻訳を開始してください"
 
@@ -66,7 +74,7 @@ async def stop(ctx):
         desc = "翻訳を終了します"
 
         embed = create_embed(
-            "stopped", desc, bot.user.name, bot.user.display_avatar.url)
+            "off", desc, bot.user.name, bot.user.display_avatar.url)
         await ctx.channel.send(embed=embed)
         channels_list[ctx.channel.id].started = False
         return
@@ -78,20 +86,39 @@ async def stop(ctx):
         await ctx.channel.send(embed=embed)
         return
 
+#
+# show ...　コマンドが打たれたチャンネルの設定を表示
+#
+
 @bot.command()
-async def set(ctx, *args):
+async def show(ctx, *args):
+    if not ctx.channel.id in channels_list:
+        channels_list[ctx.channel.id] = ChannelConfig(ctx.channel.id)
+    desc = "設定中の言語```" + langs_order_str(channels_list[ctx.channel.id].langs, channels_list[ctx.channel.id].origin_lang, " 👉 ") + "```"
+
+    embed = create_embed(
+        "set", desc, bot.user.name, bot.user.display_avatar.url)
+    await ctx.channel.send(embed=embed)
+    return
+
+#
+# l ...　コマンドが打たれたチャンネルでの中継言語を設定
+#
+
+@bot.command()
+async def l(ctx, *args):
     if not ctx.channel.id in channels_list:
         channels_list[ctx.channel.id] = ChannelConfig(ctx.channel.id)
 
     if len(args) == 0:
-        desc = "設定中の言語```" + langs_order_str(channels_list[ctx.channel.id].langs, " 👉 ") + "```"
+        desc = "言語コードを入力してください"
 
         embed = create_embed(
-            "set", desc, bot.user.name, bot.user.display_avatar.url)
+            "error", desc, bot.user.name, bot.user.display_avatar.url)
         await ctx.channel.send(embed=embed)
         return
 
-    if len(args) > 10:
+    elif len(args) > 10:
         desc = "中継言語に設定できるのは１０ヶ国語までです"
 
         embed = create_embed(
@@ -100,7 +127,7 @@ async def set(ctx, *args):
         return
 
     else:
-        res = translate_GAS("a", args)
+        res = translate_GAS("a", args, channels_list[ctx.channel.id].origin_lang)
         # 引数にGASで使えない言語が含まれているかどうかテストする
 
         if "無効な引数: target" in res:
@@ -119,18 +146,78 @@ async def set(ctx, *args):
 
         channels_list[ctx.channel.id].langs = args
 
-        desc = "言語を設定しました```" + langs_order_str(channels_list[ctx.channel.id].langs, " 👉 ") + "```"
+        desc = "言語を設定しました```" + langs_order_str(channels_list[ctx.channel.id].langs, channels_list[ctx.channel.id].origin_lang, " 👉 ") + "```"
 
         embed = create_embed(
             "set", desc, bot.user.name, bot.user.display_avatar.url)
         await ctx.channel.send(embed=embed)
         return
 
+#
+# lo ...　コマンドが打たれたチャンネルでの原文言語を設定
+#
+
+@bot.command()
+async def lo(ctx, *args):
+    if not ctx.channel.id in channels_list:
+        channels_list[ctx.channel.id] = ChannelConfig(ctx.channel.id)
+    if len(args) == 0:
+        desc = "言語コードを入力してください"
+
+        embed = create_embed(
+            "error", desc, bot.user.name, bot.user.display_avatar.url)
+        await ctx.channel.send(embed=embed)
+        return
+
+    elif len(args) > 1:
+        desc = "1ヶ国語のみ入力してください"
+
+        embed = create_embed(
+            "error", desc, bot.user.name, bot.user.display_avatar.url)
+        await ctx.channel.send(embed=embed)
+        return
+
+    else:
+        res = translate_GAS("a", channels_list[ctx.channel.id].langs, args[0])
+        # 引数にGASで使えない言語が含まれているかどうかテストする
+
+        if "無効な引数: target" in res:
+            desc = "無効な言語が指定されています"
+            embed = create_embed(
+                "error", desc, bot.user.name, bot.user.display_avatar.url)
+            await ctx.channel.send(embed=embed)
+            return
+
+        elif "特定の言語間での翻訳は、現在サポートされていません。" in res:
+            desc = "同じ言語間での翻訳\nor\nサポートされていない特定の言語間の翻訳\nが含まれています"
+            embed = create_embed(
+                "error", desc, bot.user.name, bot.user.display_avatar.url)
+            await ctx.channel.send(embed=embed)
+            return
+
+        channels_list[ctx.channel.id].origin_lang = args[0]
+
+        desc = "言語を設定しました```" + langs_order_str(channels_list[ctx.channel.id].langs, channels_list[ctx.channel.id].origin_lang, " 👉 ") + "```"
+
+        embed = create_embed(
+            "set", desc, bot.user.name, bot.user.display_avatar.url)
+        await ctx.channel.send(embed=embed)
+        return
+
+#
+# help ...　ヘルプ表示
+#
+
 @bot.command()
 async def help(ctx):
-    desc = "使い方:\n```" + command_prefix + "start```翻訳開始\n```" + command_prefix + "set```現在設定されている中継言語を表示\n\n```" + command_prefix + "set [1番目の言語コード] [2番めの言語コード] ...```中継する言語を設定\n※10ヶ国語まで設定できます\n\n言語コードの表→https://cloud.google.com/translate/docs/languages?hl=ja\n\n```" + command_prefix + "stop```翻訳を終了\n"
+    desc = "```" + command_prefix + "on```翻訳開始\n" \
+        + "```"+ command_prefix + "off```翻訳を終了\n" \
+        + "```" + command_prefix + "show```現在の設定を表示\n" \
+        + "```"+ command_prefix + "l [1番目の言語コード] [2番めの言語コード] ...```中継する言語を設定\n※10ヶ国語まで設定できます" \
+        + "```"+ command_prefix + "lo [言語コード]```原文で使用する言語を設定\n言語コードの表 → https://cloud.google.com/translate/docs/languages?hl=ja\n" \
+        + "```" + command_prefix + "ori```原文の表示/非表示切り替え\n"
 
-    embed = create_embed("help", desc, bot.user.name, bot.user.display_avatar.url)
+    embed = create_embed("使い方", desc, bot.user.name, bot.user.display_avatar.url)
     await ctx.channel.send(embed=embed)
 
     return
@@ -160,10 +247,10 @@ async def on_message(ctx):
             name = ctx.author.name
         # ニックネームが設定されてなければユーザ名で表示する
 
-        result = translate_GAS(not_translated_txt, channels_list[ctx.channel.id].langs)
+        result = translate_GAS(not_translated_txt, channels_list[ctx.channel.id].langs, channels_list[ctx.channel.id].origin_lang,)
         desc = result + "\n\n||原文:" + not_translated_txt + "||"
         icon_url = ctx.author.display_avatar.url
-        footer_text = langs_order_str(channels_list[ctx.channel.id].langs, " -> ")
+        footer_text = langs_order_str(channels_list[ctx.channel.id].langs, channels_list[ctx.channel.id].origin_lang, " -> ")
 
         embed = create_embed_withfooter("", desc, name, icon_url, footer_text, icon_url)
         await ctx.channel.send(embed=embed)
