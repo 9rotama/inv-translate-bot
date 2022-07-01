@@ -1,6 +1,7 @@
 import discord
 from discord.ext import commands
-from os import getenv
+from os import environ
+import sys
 
 from translate import translate_GAS
 from generate import langs_order_str, create_embed, create_embed_withfooter
@@ -9,8 +10,10 @@ from ChannelConfig import ChannelConfig
 command_prefix = "^^"
 
 intents = discord.Intents.all()
-intents.message_content = True
-token = getenv("DISCORD_BOT_TOKEN")
+
+token = environ["DISCORD_BOT_TOKEN"]
+
+
 bot = commands.Bot(
     command_prefix=command_prefix,
     intents=intents
