@@ -91,13 +91,18 @@ async def off(ctx):
 #
 
 @bot.command()
-async def show(ctx, *args):
+async def config(ctx, *args):
     if not ctx.channel.id in channels_list:
         channels_list[ctx.channel.id] = ChannelConfig(ctx.channel.id)
-    desc = "設定中の言語```" + langs_order_str(channels_list[ctx.channel.id].langs, channels_list[ctx.channel.id].origin_lang, " 👉 ") + "```"
+
+    channel = channels_list[ctx.channel.id]
+    show =  "表示" if channel.show_origin_text else "非表示"
+
+    desc = "中継言語: ```" + langs_order_str(channel.langs, channel.origin_lang, " 👉 ") + "```\n"\
+        "原文: ```" + show + "```\n"
 
     embed = create_embed(
-        "set", desc, bot.user.name, bot.user.display_avatar.url)
+        "設定", desc, bot.user.name, bot.user.display_avatar.url)
     await ctx.channel.send(embed=embed)
     return
 
