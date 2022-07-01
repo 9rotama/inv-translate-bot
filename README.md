@@ -22,25 +22,9 @@ https://discord.com/api/oauth2/authorize?client_id=981977773277061210&permission
 
 ## 使い方
 
-```^start```
+```^^help```
 
-翻訳開始
-
-```^set```
-
-現在設定されている中継言語を表示
-
-```^set [1番目の言語コード] [2番めの言語コード] ...```
-
-中継する言語を設定
-
-※10ヶ国語まで設定できます
-
-言語コードの表 → https://cloud.google.com/translate/docs/languages?hl=ja
-
-```^stop```
-
-翻訳を終了
+ヘルプ参照
 
 ## 使ったもの
 
