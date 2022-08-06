@@ -18,6 +18,7 @@ bot.remove_command('help')
 
 db_url = environ["DB_URL"]
 dbclient = motor.AsyncIOMotorClient(db_url)
+db = dbclient["re-translate-bot"]
 
 channels_list: dict[str, ChannelConfig] = {}
 # チャンネルごとの設定を保持する辞書
