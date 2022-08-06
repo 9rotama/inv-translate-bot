@@ -1,25 +1,23 @@
 import discord
 from discord.ext import commands
+from motor import motor_asyncio as motor
 from os import environ
 import sys
 
-from translate import translate_GAS
-from generate import langs_order_str, create_embed, create_embed_withfooter
+from funcs import langs_order_str, create_embed, create_embed_withfooter, translate_GAS
 from ChannelConfig import ChannelConfig
 
 command_prefix = "^^"
-
 intents = discord.Intents.all()
-
-token = environ["DISCORD_BOT_TOKEN"]
-
-
 bot = commands.Bot(
     command_prefix=command_prefix,
     intents=intents
     )
 # デフォルトで入っているhelpコマンドを削除
 bot.remove_command('help')
+
+db_url = environ["DB_URL"]
+dbclient = motor.AsyncIOMotorClient(db_url)
 
 channels_list: dict[str, ChannelConfig] = {}
 # チャンネルごとの設定を保持する辞書
@@ -290,4 +288,5 @@ async def on_message(ctx):
 
         return
 
+token = environ["DISCORD_BOT_TOKEN"]
 bot.run(token)
