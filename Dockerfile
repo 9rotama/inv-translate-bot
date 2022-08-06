@@ -11,6 +11,7 @@ python -m pip install \
 git clone https://github.com/Rapptz/discord.py &&\
 cd discord.py &&\
 python -m pip install -U .[voice] &&\
-python -m pip install requests
+python -m pip install requests\
+python3 -m pip install motor dnspython
 
 CMD ["python3.9", "src/bot.py"]
