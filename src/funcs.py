@@ -4,7 +4,6 @@ from os import environ
 
 gas_url = environ["GAS_URL"]
 
-# 
 def langs_order_str(langs, origin_lang, separator):
     str = origin_lang + separator + separator.join(langs) + separator + origin_lang
     return str
