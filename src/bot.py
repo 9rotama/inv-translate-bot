@@ -33,6 +33,25 @@ async def on_ready():
     await bot.change_presence(activity=discord.Game(name=command_prefix+"helpでヘルプ表示"))
     # ステータスを設定
 
+async def validate_exist_langs(langs, origin_langs):
+    # 引数にGASで使えない言語が含まれているかどうかテストする
+    # エラーがなければFalseを返す
+    res = translate_GAS("a", langs, origin_langs)
+
+    if "無効な引数" in res:
+        desc = "無効な言語が指定されています"
+        embed = create_embed(
+            "error", desc, bot.user.name, bot.user.display_avatar.url)
+        return embed
+
+    elif "特定の言語間での翻訳は、現在サポートされていません。" in res:
+        desc = "同じ言語間での翻訳\nor\nサポートされていない特定の言語間の翻訳\nが含まれています"
+        embed = create_embed(
+            "error", desc, bot.user.name, bot.user.display_avatar.url)
+        return embed
+    else:
+        return False
+
 #
 # on ...　コマンドが打たれたチャンネルで自動翻訳を開始する
 #
@@ -156,21 +175,9 @@ async def l(ctx, *args):
         return
 
     else:
-        res = translate_GAS("a", args, channels_list[ctx.channel.id].origin_lang)
-        # 引数にGASで使えない言語が含まれているかどうかテストする
-
-        if "無効な引数: target" in res:
-            desc = "無効な言語が指定されています"
-            embed = create_embed(
-                "error", desc, bot.user.name, bot.user.display_avatar.url)
-            await ctx.channel.send(embed=embed)
-            return
-
-        elif "特定の言語間での翻訳は、現在サポートされていません。" in res:
-            desc = "同じ言語間での翻訳\nor\nサポートされていない特定の言語間の翻訳\nが含まれています"
-            embed = create_embed(
-                "error", desc, bot.user.name, bot.user.display_avatar.url)
-            await ctx.channel.send(embed=embed)
+        res = await validate_exist_langs(args, channels_list[ctx.channel.id].origin_lang)
+        if res:
+            await ctx.channel.send(embed=res)
             return
 
         channels_list[ctx.channel.id].langs = args
@@ -207,21 +214,9 @@ async def ol(ctx, *args):
         return
 
     else:
-        res = translate_GAS("a", channels_list[ctx.channel.id].langs, args[0])
-        # 引数にGASで使えない言語が含まれているかどうかテストする
-
-        if "無効な引数: target" in res:
-            desc = "無効な言語が指定されています"
-            embed = create_embed(
-                "error", desc, bot.user.name, bot.user.display_avatar.url)
-            await ctx.channel.send(embed=embed)
-            return
-
-        elif "特定の言語間での翻訳は、現在サポートされていません。" in res:
-            desc = "同じ言語間での翻訳\nor\nサポートされていない特定の言語間の翻訳\nが含まれています"
-            embed = create_embed(
-                "error", desc, bot.user.name, bot.user.display_avatar.url)
-            await ctx.channel.send(embed=embed)
+        res = await validate_exist_langs(channels_list[ctx.channel.id].langs, args[0])
+        if res:
+            await ctx.channel.send(embed=res)
             return
 
         channels_list[ctx.channel.id].origin_lang = args[0]
