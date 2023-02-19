@@ -21,7 +21,6 @@ bot = commands.Bot(
 # デフォルトで入っているhelpコマンドを削除
 bot.remove_command('help')
 
-
 @bot.event
 async def on_ready():
     print(f"We have logged in as {bot.user}")
