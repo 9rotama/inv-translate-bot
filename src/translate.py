@@ -1,6 +1,7 @@
 import requests
+from os import environ
 
-api_url = "https://script.google.com/macros/s/AKfycbybnefLnp6WsVP1Ju7EeN6L1O6BT3ed4Jwc7kOouosn6o6rQHt2EWVPn8vAQcZJ8s8O/exec?"
+api_url = environ["GAS_URL"]
 
 def translate_GAS(txt, langs, origin_lang):
     req_url = api_url + "txt=" + txt + "&langs=" + ",".join(langs) + "&origin_lang=" + origin_lang
