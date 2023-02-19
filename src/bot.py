@@ -6,13 +6,13 @@ import sys
 from translate import translate_GAS
 from generate import langs_order_str, create_embed, create_embed_withfooter
 from ChannelConfig import ChannelConfig
+from db import *
 
 command_prefix = "^^"
 
 intents = discord.Intents.all()
 
 token = environ["DISCORD_BOT_TOKEN"]
-
 
 bot = commands.Bot(
     command_prefix=command_prefix,
@@ -21,10 +21,6 @@ bot = commands.Bot(
 # デフォルトで入っているhelpコマンドを削除
 bot.remove_command('help')
 
-channels_list: dict[str, ChannelConfig] = {}
-# チャンネルごとの設定を保持する辞書
-# key...チャンネルID
-# value...チャンネルごとの設定(ChannelConfigクラス)
 
 @bot.event
 async def on_ready():
@@ -33,7 +29,7 @@ async def on_ready():
     await bot.change_presence(activity=discord.Game(name=command_prefix+"helpでヘルプ表示"))
     # ステータスを設定
 
-async def validate_exist_langs(langs, origin_langs):
+def validate_exist_langs(langs, origin_langs):
     # 引数にGASで使えない言語が含まれているかどうかテストする
     # エラーがなければFalseを返す
     res = translate_GAS("a", langs, origin_langs)
@@ -58,16 +54,21 @@ async def validate_exist_langs(langs, origin_langs):
 
 @bot.command()
 async def on(ctx):
-    if not ctx.channel.id in channels_list:
-        channels_list[ctx.channel.id] = ChannelConfig(ctx.channel.id) #channel_listに追加
+    config = await get_channel(ctx.channel.id)
 
-    if not channels_list[ctx.channel.id].started:
+    # チャンネルがDBに無い場合追加する
+    if config is False:
+        await add_channel(ctx.channel.id)
+        config = await get_channel(ctx.channel.id)
+
+    if config["started"] is False:
+        # チャンネルがDBにあり場合開始していない場合
         desc = "翻訳開始！"
 
         embed = create_embed(
             "on", desc, bot.user.name, bot.user.display_avatar.url)
         await ctx.channel.send(embed=embed)
-        channels_list[ctx.channel.id].started = True
+        await set_channel(ctx.channel.id, True, config["langs"], config["show_origin_text"], config["origin_lang"])
         return
     else:
         desc = "すでに翻訳開始しています"
@@ -75,7 +76,6 @@ async def on(ctx):
         embed = create_embed(
             "error", desc, bot.user.name, bot.user.display_avatar.url)
         await ctx.channel.send(embed=embed)
-        channels_list[ctx.channel.id].started = True
         return
 
 #
@@ -84,7 +84,10 @@ async def on(ctx):
 
 @bot.command()
 async def off(ctx):
-    if not ctx.channel.id in channels_list:
+    config = await get_channel(ctx.channel.id)
+
+    # チャンネルがDBに無い場合エラーを出す
+    if config is False:
         desc = "先に翻訳を開始してください"
 
         embed = create_embed(
@@ -92,13 +95,14 @@ async def off(ctx):
         await ctx.channel.send(embed=embed)
         return
 
-    if channels_list[ctx.channel.id].started:
+    if config["started"]:
+        # チャンネルがDBにあり開始している場合
         desc = "翻訳を終了します"
 
         embed = create_embed(
             "off", desc, bot.user.name, bot.user.display_avatar.url)
         await ctx.channel.send(embed=embed)
-        channels_list[ctx.channel.id].started = False
+        await set_channel(ctx.channel.id, False, config["langs"], config["show_origin_text"], config["origin_lang"])
         return
     else:
         desc = "先に翻訳を開始してください"
@@ -114,13 +118,15 @@ async def off(ctx):
 
 @bot.command()
 async def config(ctx, *args):
-    if not ctx.channel.id in channels_list:
-        channels_list[ctx.channel.id] = ChannelConfig(ctx.channel.id)
+    config = await get_channel(ctx.channel.id)
 
-    channel = channels_list[ctx.channel.id]
-    show =  "表示" if channel.show_origin_text else "非表示"
+    # チャンネルがDBに無い場合追加する
+    if config is False:
+        await add_channel(ctx.channel.id)
+        config = await get_channel(ctx.channel.id)
 
-    desc = "中継言語: ```" + langs_order_str(channel.langs, channel.origin_lang, " 👉 ") + "```\n"\
+    show = "表示" if config["show_origin_text"] else "非表示"
+    desc = "中継言語: ```" + langs_order_str(config["langs"], config["origin_lang"], " 👉 ") + "```\n"\
         "原文: ```" + show + "```\n"
 
     embed = create_embed(
@@ -134,15 +140,19 @@ async def config(ctx, *args):
 
 @bot.command()
 async def spoil(ctx):
-    if not ctx.channel.id in channels_list:
-        channels_list[ctx.channel.id] = ChannelConfig(ctx.channel.id)
+    config = await get_channel(ctx.channel.id)
 
-    if channels_list[ctx.channel.id].show_origin_text:
+    # チャンネルがDBに無い場合追加する
+    if config is False:
+        await add_channel(ctx.channel.id)
+        config = await get_channel(ctx.channel.id)
+
+    if config["show_origin_text"]:
         desc = "原文を非表示にします"
-        channels_list[ctx.channel.id].show_origin_text = False
+        await set_channel(ctx.channel.id, config["started"], config["langs"], False, config["origin_lang"])
     else:
         desc = "原文を表示します"
-        channels_list[ctx.channel.id].show_origin_text = True
+        await set_channel(ctx.channel.id, config["started"], config["langs"], True, config["origin_lang"])
 
     embed = create_embed(
         "set", desc, bot.user.name, bot.user.display_avatar.url)
@@ -155,8 +165,12 @@ async def spoil(ctx):
 
 @bot.command()
 async def l(ctx, *args):
-    if not ctx.channel.id in channels_list:
-        channels_list[ctx.channel.id] = ChannelConfig(ctx.channel.id)
+    config = await get_channel(ctx.channel.id)
+
+    # チャンネルがDBに無い場合追加する
+    if config is False:
+        await add_channel(ctx.channel.id)
+        config = await get_channel(ctx.channel.id)
 
     if len(args) == 0:
         desc = "言語コードを入力してください"
@@ -175,14 +189,15 @@ async def l(ctx, *args):
         return
 
     else:
-        res = await validate_exist_langs(args, channels_list[ctx.channel.id].origin_lang)
+        res = validate_exist_langs(args, config["origin_lang"])
         if res:
             await ctx.channel.send(embed=res)
             return
 
-        channels_list[ctx.channel.id].langs = args
+        await set_channel(ctx.channel.id, config["started"], args, config["show_origin_text"], config["origin_lang"])
 
-        desc = "言語を設定しました```" + langs_order_str(channels_list[ctx.channel.id].langs, channels_list[ctx.channel.id].origin_lang, " 👉 ") + "```"
+        config = await get_channel(ctx.channel.id) # 設定が更新されたされたので再度取得
+        desc = "言語を設定しました```" + langs_order_str(config["langs"], config["origin_lang"], " 👉 ") + "```"
 
         embed = create_embed(
             "set", desc, bot.user.name, bot.user.display_avatar.url)
@@ -195,8 +210,13 @@ async def l(ctx, *args):
 
 @bot.command()
 async def ol(ctx, *args):
-    if not ctx.channel.id in channels_list:
-        channels_list[ctx.channel.id] = ChannelConfig(ctx.channel.id)
+    config = await get_channel(ctx.channel.id)
+
+    # チャンネルがDBに無い場合追加する
+    if config is False:
+        await add_channel(ctx.channel.id)
+        config = await get_channel(ctx.channel.id)
+
     if len(args) == 0:
         desc = "言語コードを入力してください"
 
@@ -214,14 +234,15 @@ async def ol(ctx, *args):
         return
 
     else:
-        res = await validate_exist_langs(channels_list[ctx.channel.id].langs, args[0])
+        res = validate_exist_langs(config["langs"], args[0])
         if res:
             await ctx.channel.send(embed=res)
             return
 
-        channels_list[ctx.channel.id].origin_lang = args[0]
+        await set_channel(ctx.channel.id, config["started"], config["langs"], config["show_origin_text"], args[0])
 
-        desc = "言語を設定しました```" + langs_order_str(channels_list[ctx.channel.id].langs, channels_list[ctx.channel.id].origin_lang, " 👉 ") + "```"
+        config = await get_channel(ctx.channel.id) # 設定が更新されたされたので再度取得
+        desc = "言語を設定しました```" + langs_order_str(config["langs"], config["origin_lang"], " 👉 ") + "```"
 
         embed = create_embed(
             "set", desc, bot.user.name, bot.user.display_avatar.url)
@@ -252,14 +273,16 @@ async def on_message(ctx):
         return
     # bot自身のメッセージは読まずに終了
 
-
     if ctx.content.startswith(command_prefix):
         await bot.process_commands(ctx)
         return
     # コマンドプレフィックスが付く場合commandsの処理にまわして終了
-    started: bool = False
-    if ctx.channel.id in channels_list:
-        started = channels_list[ctx.channel.id].started
+
+    started = False
+    config = await get_channel(ctx.channel.id)
+
+    if config is not False:
+        started = config["started"]
 
     if started:
         not_translated_txt = ctx.content
@@ -271,14 +294,14 @@ async def on_message(ctx):
             name = ctx.author.name
         # ニックネームが設定されてなければユーザ名で表示する
 
-        result = translate_GAS(not_translated_txt, channels_list[ctx.channel.id].langs, channels_list[ctx.channel.id].origin_lang,)
-        if channels_list[ctx.channel.id].show_origin_text:
+        result = translate_GAS(not_translated_txt, config["langs"], config["origin_lang"])
+        if config["show_origin_text"]:
             desc = result + "\n\n||原文:" + not_translated_txt + "||"
         else:
             desc = result
 
         icon_url = ctx.author.display_avatar.url
-        footer_text = langs_order_str(channels_list[ctx.channel.id].langs, channels_list[ctx.channel.id].origin_lang, " -> ")
+        footer_text = langs_order_str(config["langs"], config["origin_lang"], " -> ")
 
         embed = create_embed_withfooter("", desc, name, icon_url, footer_text, icon_url)
         await ctx.channel.send(embed=embed)
