@@ -5,7 +5,6 @@ import sys
 
 from translate import translate_GAS
 from generate import langs_order_str, create_embed, create_embed_withfooter
-from ChannelConfig import ChannelConfig
 from db import *
 
 command_prefix = "^^"
